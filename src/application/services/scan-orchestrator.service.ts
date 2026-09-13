@@ -11,6 +11,7 @@ import type { DetectionContext } from '../../detection/types.js';
 import { DetectionService } from './detection.service.js';
 import { ProjectCollectionService } from './project-collection.service.js';
 import { SystemCollectionService } from './system-collection.service.js';
+import { getAppVersion } from '../../version.js';
 
 export interface ScanOrchestratorOptions {
   readonly systemCollectionService?: SystemCollectionService;
@@ -202,7 +203,7 @@ export class ScanOrchestratorService {
       category,
       score: scoreResult,
       tool: 'yowtf',
-      version: '0.1.0',
+      version: getAppVersion(),
     });
   }
 

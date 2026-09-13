@@ -8,11 +8,12 @@ import {
   formatCliError,
 } from './errors.js';
 import { registerGlobalOptions } from './options.js';
+import { getAppVersion } from '../version.js';
 
 export const APP_NAME = 'yowtf';
 export const APP_FULL_NAME = 'Your Operating Workstation Trouble Finder';
 export const APP_TAGLINE = 'Yo, WTF is happening?';
-export const APP_VERSION = '0.1.1';
+export const APP_VERSION = getAppVersion();
 
 /**
  * Creates and configures the complete Commander program for YOWTF.

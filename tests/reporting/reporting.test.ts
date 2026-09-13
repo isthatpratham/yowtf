@@ -8,6 +8,7 @@ import {
   type ReportModel,
 } from '../../src/reporting/index.js';
 import { calculateScore } from '../../src/scoring/index.js';
+import { getAppVersion } from '../../src/version.js';
 
 function createSampleFinding(overrides: Partial<Finding> = {}): Finding {
   return {
@@ -140,7 +141,7 @@ describe('Reporting Engine (docs/CLI-SPEC.md & docs/SCORING.md)', () => {
       expect(parsed).toHaveProperty('metadata');
       expect(parsed.metadata).toMatchObject({
         tool: 'yowtf',
-        version: '0.1.0',
+        version: getAppVersion(),
         command: 'doctor',
         targetPath: '/workspace/project',
         scope: 'system + project',
