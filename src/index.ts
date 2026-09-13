@@ -4,6 +4,10 @@
  */
 
 export * from './cli/cli.js';
+export * from './cli/errors.js';
+export * from './cli/options.js';
+export * from './cli/path.js';
+export * from './cli/dispatch.js';
 export * from './application/index.js';
 export * from './domain/index.js';
 export * from './collection/index.js';
