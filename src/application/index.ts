@@ -56,3 +56,4 @@ export async function executeCommand(context: CommandContext): Promise<CommandRe
 
 export * from './services/system-collection.service.js';
 export * from './services/project-collection.service.js';
+export * from './services/detection.service.js';
