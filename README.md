@@ -516,26 +516,24 @@ You stay in control.
 
 # 🌍 Cross-Platform
 
-V1 targets:
+YOWTF is designed for multi-platform developer workstations:
 
-- Windows
-- macOS
-- Linux
+- **Windows** (native PowerShell and cmd command execution)
+- **macOS** (Darwin process and system introspection)
+- **Linux** (POSIX and `/proc`-compatible metric gathering)
 
-Not every operating system exposes the same diagnostics.
-
-YOWTF therefore distinguishes between:
+Not every operating system exposes identical diagnostic APIs or system utilities. YOWTF therefore distinguishes between:
 
 ```text
-PASS
-FAIL
-WARN
-SKIPPED
-UNAVAILABLE
-ERROR
+PASS         Condition verified healthy
+FAIL         Definite issue identified
+WARN         Condition requires developer attention
+SKIPPED      Diagnostic not applicable to this project or platform
+UNAVAILABLE  Platform metric or tool not available in this environment
+ERROR        Unexpected internal error during individual rule evaluation
 ```
 
-An unavailable platform capability is not automatically treated as a failure.
+An unavailable platform capability is never treated as an execution failure. On unsupported platforms (e.g. BSD or Solaris), YOWTF gracefully skips platform-specific collectors and executes generic project diagnostics safely.
 
 ---
 
@@ -543,23 +541,29 @@ An unavailable platform capability is not automatically treated as a failure.
 
 YOWTF is distributed through npm.
 
-Install globally:
+### Run instantly with npx
+
+You can run YOWTF without installing it globally:
 
 ```bash
-npm install -g @isthatpratham/yowtf
+npx yowtf
+```
+
+### Or install globally
+
+With npm:
+
+```bash
+npm install -g yowtf
 ```
 
 Or with pnpm:
 
 ```bash
-pnpm add -g @isthatpratham/yowtf
+pnpm add -g yowtf
 ```
 
-Then:
-
-```bash
-yowtf
-```
+> **Note:** Public npm publication will occur in Phase 11. Until published to the npm registry, you can clone and run YOWTF locally from source (see [Development](#-development)).
 
 Check the installed version:
 
@@ -610,7 +614,7 @@ yowtf deps
 
 # 🧰 Commands
 
-YOWTF V1 exposes the following commands:
+YOWTF V1 exposes 20 canonical entry points (default full scan + 19 focused subcommands):
 
 ```text
 yowtf
@@ -642,44 +646,46 @@ yowtf clean
 
 # 📖 Command Overview
 
-| Command           | Purpose                                  |
-| ----------------- | ---------------------------------------- |
-| `yowtf`           | Full/default diagnostic scan             |
-| `yowtf doctor`    | Health-oriented diagnostic scan          |
-| `yowtf score`     | Show health score                        |
-| `yowtf explain`   | Explain detected findings                |
-| `yowtf system`    | System diagnostics                       |
-| `yowtf disk`      | Disk/storage diagnostics                 |
-| `yowtf processes` | Process diagnostics                      |
-| `yowtf ports`     | Port diagnostics                         |
-| `yowtf network`   | Local network diagnostics                |
-| `yowtf env`       | Environment diagnostics                  |
-| `yowtf runtimes`  | Runtime diagnostics                      |
-| `yowtf tools`     | Developer tool diagnostics               |
-| `yowtf paths`     | PATH/executable diagnostics              |
-| `yowtf versions`  | Version conflict/requirement diagnostics |
-| `yowtf project`   | Project diagnostics                      |
-| `yowtf deps`      | Dependency diagnostics                   |
-| `yowtf git`       | Git diagnostics                          |
-| `yowtf config`    | Configuration diagnostics                |
-| `yowtf caches`    | Developer cache diagnostics              |
-| `yowtf clean`     | Cleanup candidate diagnostics            |
+| Command           | Category    | Purpose                                                                              |
+| :---------------- | :---------- | :----------------------------------------------------------------------------------- |
+| `yowtf`           | Core        | Full workstation and project diagnostic scan                                         |
+| `yowtf doctor`    | Core        | Health-oriented diagnostic scan highlighting issues requiring attention              |
+| `yowtf score`     | Core        | Calculate and display the 0–100 workstation/project health score                     |
+| `yowtf explain`   | Core        | Provide detailed explanations and next steps for detected findings                   |
+| `yowtf system`    | Workstation | Inspect OS, CPU architecture, memory pressure, and system uptime                     |
+| `yowtf disk`      | Workstation | Inspect disk space, storage pressure, and volume limits                              |
+| `yowtf processes` | Workstation | Detect process resource hogs and duplicate dev processes (read-only)                 |
+| `yowtf ports`     | Workstation | Detect development port conflicts and listening sockets (read-only)                  |
+| `yowtf network`   | Workstation | Inspect network interfaces, DNS configuration, and proxy settings                    |
+| `yowtf env`       | Environment | Inspect environment variables, PATH entries, and configuration metadata safely       |
+| `yowtf runtimes`  | Environment | Inspect installed and active runtimes (Node.js, Python, Java, etc.)                  |
+| `yowtf tools`     | Environment | Inspect developer tools (Git, package managers, Docker, etc.)                        |
+| `yowtf paths`     | Environment | Detect PATH-order shadowing, empty entries, and executable conflicts                 |
+| `yowtf versions`  | Environment | Diagnose version conflicts and requirement mismatches                                |
+| `yowtf project`   | Project     | Diagnose project type, manifest health, and configuration                            |
+| `yowtf deps`      | Project     | Diagnose project dependency health, lockfiles, and package manager consistency       |
+| `yowtf git`       | Project     | Inspect Git repository health, branch status, and working tree (read-only)           |
+| `yowtf config`    | Project     | Inspect project configuration files and environment definitions                      |
+| `yowtf caches`    | Maintenance | Identify developer caches and large storage consumers (read-only)                    |
+| `yowtf clean`     | Maintenance | Diagnostic cleanup candidate finder; `--preview` reports candidates without deleting |
+
+> **Important:** `yowtf clean` (and `yowtf clean --preview`) is **strictly diagnostic**. It reports identified cleanup candidates and estimated sizes. It **never deletes any files**.
 
 ---
 
 # 🎛️ Global Options
 
-All commands support the documented global options where applicable.
+All commands support the documented global options:
 
-```text
--h, --help
--V, --version
---verbose
---no-color
---json
---quiet
---path <dir>
-```
+| Option          | Purpose          | Description                                                                 |
+| :-------------- | :--------------- | :-------------------------------------------------------------------------- |
+| `-h, --help`    | Help             | Display help and usage information for YOWTF or a subcommand                |
+| `-V, --version` | Version          | Display current version number                                              |
+| `--verbose`     | Verbose mode     | Enable detailed diagnostic output (without exposing secrets)                |
+| `--no-color`    | Color toggle     | Disable ANSI terminal colors for raw text pipelines                         |
+| `--json`        | Machine output   | Output pure machine-readable JSON (suppresses spinners and decorations)     |
+| `--quiet`       | Quiet mode       | Reduce output noise; show only essential findings and summaries             |
+| `--path <dir>`  | Target directory | Target a specific project directory (defaults to current working directory) |
 
 ### Examples
 
@@ -717,35 +723,30 @@ yowtf --path ./some-project
 
 # 🤖 JSON Output
 
-YOWTF supports machine-readable output.
+YOWTF supports pure machine-readable output:
 
 ```bash
 yowtf --json
 ```
 
-This is intended for:
+When `--json` is enabled:
 
-- scripts
-- CI workflows
-- local automation
-- debugging
-- future integrations
-
-When JSON mode is active, terminal decoration must not contaminate the machine-readable output.
+- Interactive spinners and progress bars are disabled.
+- ANSI color formatting sequences are suppressed.
+- Informational banners and decoration are omitted.
+- The output can be piped directly to tools like `jq` or captured by CI automation.
 
 ---
 
 # 🚦 Exit Codes
 
-YOWTF V1 defines:
+YOWTF defines strict, predictable exit code semantics:
 
-| Code | Meaning                                                               |
-| ---: | --------------------------------------------------------------------- |
-|  `0` | Successful execution with no blocking CLI/application error           |
-|  `1` | Diagnostic/application failure requiring a non-success process result |
-|  `2` | CLI usage error                                                       |
-
-Diagnostic findings and process exit behavior are governed by the CLI specification.
+| Exit Code | Classification          | Meaning                                                                                                                           |
+| :-------: | :---------------------- | :-------------------------------------------------------------------------------------------------------------------------------- |
+|    `0`    | **Success**             | Successful command execution. Findings with `FAIL`, `WARN`, or `PASS` status are valid diagnostic results and exit with code `0`. |
+|    `1`    | **Application Failure** | Internal or fatal application error preventing completion of the diagnostic run.                                                  |
+|    `2`    | **CLI Usage Error**     | Unknown command, unrecognized option, missing required argument, or inaccessible project directory path.                          |
 
 ---
 
@@ -961,52 +962,125 @@ docs/ARCHITECTURE.md
 
 ---
 
+# 🔧 Troubleshooting
+
+### Unknown command or unrecognized option (Exit Code 2)
+
+```text
+error: unknown command 'foo'
+error: unknown option '--bar'
+```
+
+**Cause:** Typographical error in command or option name.  
+**Resolution:** Run `yowtf --help` to list all 20 valid commands, or `yowtf <command> --help` to inspect command-specific flags.
+
+### Invalid or inaccessible path (Exit Code 2)
+
+```text
+CLI Usage Error: Directory does not exist or is not accessible: ./non-existent-dir
+```
+
+**Cause:** The directory passed to `--path <dir>` does not exist or lacks read permissions.  
+**Resolution:** Verify the target directory path spelling and ensure your user account has read access.
+
+### Tool or runtime shows `UNAVAILABLE` or `SKIPPED`
+
+```text
+[SKIPPED] runtime.python.unpinned (Python not detected)
+```
+
+**Cause:** The specified runtime (e.g. Python, Java, Docker) is not installed or not present in your system `PATH`.  
+**Resolution:** This is normal diagnostic behavior. YOWTF never crashes when an optional tool is absent; it records the evidence as unavailable and skips dependent checks.
+
+### Permission or access issues during collection
+
+**Cause:** Certain system statistics (e.g. processes belonging to other users or privileged network sockets) may be restricted by the host OS.  
+**Resolution:** YOWTF runs without requiring root/administrator permissions. Restricted metrics are safely captured as `FAILED` or `UNAVAILABLE` collection evidence without halting the scan.
+
+### Scripting with JSON output
+
+**Cause:** Automated scripts encountering unexpected formatting in `--json` mode.  
+**Resolution:** When `--json` is supplied, all interactive spinners, ANSI color escape sequences, and decorative banners are suppressed. The stdout output is strictly valid JSON:
+
+```bash
+yowtf --json | jq .healthScore
+```
+
+### Unsupported platform handling
+
+**Cause:** Executing YOWTF on an operating system outside Windows, macOS, or Linux (e.g. BSD or Solaris).  
+**Resolution:** YOWTF safely handles unsupported platforms by skipping platform-specific collectors and running generic project-level diagnostics.
+
+---
+
 # 🧪 Development
 
-Clone the repository:
+### Prerequisites
+
+- **Node.js**: `>= 20.0.0`
+- **pnpm**: `>= 9.0.0`
+- **Git**
+
+### Setup
+
+Clone the repository and install dependencies:
 
 ```bash
 git clone https://github.com/isthatpratham/yowtf.git
 cd yowtf
-```
-
-Install dependencies:
-
-```bash
 pnpm install
 ```
 
-Run tests:
+### Build & Run Locally
+
+Compile TypeScript with `tsup`:
+
+```bash
+pnpm run build
+node dist/cli.js --help
+```
+
+To run continuously in watch mode:
+
+```bash
+pnpm dev
+```
+
+### Testing & Validation
+
+YOWTF enforces strict quality gates across testing, type safety, linting, and formatting:
+
+```bash
+# Run the complete test suite
+pnpm test
+
+# Run tests in interactive watch mode
+pnpm run test:watch
+
+# Verify TypeScript types without emitting
+pnpm run typecheck
+
+# Check code with ESLint
+pnpm run lint
+
+# Format code and verify formatting with Prettier
+pnpm run format
+pnpm run format:check
+```
+
+### Mandatory Quality Gates
+
+Before submitting any changes, ensure all 5 verification gates pass:
 
 ```bash
 pnpm test
+pnpm run typecheck
+pnpm run lint
+pnpm run format:check
+pnpm run build
 ```
 
-Run the test suite in watch mode:
-
-```bash
-pnpm test --watch
-```
-
-Build:
-
-```bash
-pnpm build
-```
-
-Run linting:
-
-```bash
-pnpm lint
-```
-
-Format code:
-
-```bash
-pnpm format
-```
-
-The exact development workflow is governed by the project documentation.
+For complete architectural rules, contribution workflows, and rule authoring guidelines, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ---
 
@@ -1276,7 +1350,7 @@ Nothing becomes part of the product merely because it appears on a roadmap.
 
 # 🤝 Contributing
 
-Contributions are welcome.
+Contributions are welcome! Please review our detailed [CONTRIBUTING.md](CONTRIBUTING.md) guide before opening pull requests.
 
 Before changing the code:
 
