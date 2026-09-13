@@ -11,23 +11,16 @@ export * from './rule-id.js';
 export * from './evidence.js';
 export * from './findings/index.js';
 export * from './rules/index.js';
+export * from './detection-result.js';
 
-import type { Finding } from './findings/finding.js';
-import type { FindingSeverity } from './severity.js';
+import type { DetectionResult } from './detection-result.js';
 import type { FindingStatus } from './status.js';
 
-// Backward-compatible type aliases
-export type DiagnosticStatus = FindingStatus;
-export type DiagnosticSeverity = FindingSeverity;
-
 /**
- * Diagnostic scan result representing evaluated findings.
- * Adheres to docs/DETECTION-ENGINE.md and docs/CLI-SPEC.md Section 46.
+ * Diagnostic scan result representing aggregated detection output for reporting.
+ * Adheres to docs/DETECTION-ENGINE.md Section 86 and docs/ARCHITECTURE.md Section 5.3.
  */
-export interface DiagnosticResult {
-  readonly findings: readonly Finding[];
+export interface DiagnosticResult extends DetectionResult {
   readonly status: FindingStatus;
   readonly summary?: string;
-  readonly timestamp?: string;
-  readonly durationMs?: number;
 }

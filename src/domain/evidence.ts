@@ -31,6 +31,7 @@ export type EvidenceMetadataValue = string | number | boolean;
 export interface EvidenceItem<T = unknown> {
   readonly key: string;
   readonly source: string;
+  readonly type?: string;
   readonly availability: EvidenceAvailability;
   readonly value?: T;
   readonly unit?: string;

@@ -41,14 +41,35 @@ export interface CreateFindingParams {
   readonly evidence?: FindingEvidence;
 }
 
+function deepFreezeEvidence(evidence?: FindingEvidence): FindingEvidence | undefined {
+  if (!evidence) {
+    return undefined;
+  }
+
+  const frozenItems = evidence.items.map((item) => {
+    const frozenItem = {
+      ...item,
+      ...(item.metadata ? { metadata: Object.freeze({ ...item.metadata }) } : {}),
+    };
+    return Object.freeze(frozenItem);
+  });
+
+  const frozenEvidence: FindingEvidence = {
+    items: Object.freeze(frozenItems),
+    ...(evidence.details ? { details: Object.freeze({ ...evidence.details }) } : {}),
+  };
+
+  return Object.freeze(frozenEvidence);
+}
+
 /**
  * Creates and validates an immutable Finding object.
- * Rejects structurally invalid parameters.
+ * Rejects structurally invalid parameters and enforces deep immutability.
  */
 export function createFinding(params: CreateFindingParams): Finding {
   if (!isValidRuleId(params.ruleId)) {
     throw new Error(
-      `Invalid ruleId: '${params.ruleId}'. Must follow lowercase dot-separated format: <category>.<subject>.<condition>`,
+      `Invalid ruleId: '${params.ruleId}'. Must follow lowercase dot-separated format`,
     );
   }
 
@@ -87,7 +108,7 @@ export function createFinding(params: CreateFindingParams): Finding {
     ...(params.explanation ? { explanation: params.explanation.trim() } : {}),
     ...(params.impact ? { impact: params.impact.trim() } : {}),
     ...(params.remediationHint ? { remediationHint: params.remediationHint.trim() } : {}),
-    ...(params.evidence ? { evidence: params.evidence } : {}),
+    ...(params.evidence ? { evidence: deepFreezeEvidence(params.evidence) } : {}),
   };
 
   return Object.freeze(finding);
