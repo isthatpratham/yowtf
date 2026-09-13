@@ -13,35 +13,4 @@ describe('CLI Foundation', () => {
     expect(program.description()).toContain('Your Operating Workstation Trouble Finder');
     expect(program.description()).toContain('Yo, WTF is happening?');
   });
-
-  it('does not prematurely implement diagnostic commands in Phase 1', () => {
-    const program = createProgram();
-    const commandNames = program.commands.map((cmd) => cmd.name());
-
-    const prematureCommands = [
-      'doctor',
-      'score',
-      'explain',
-      'system',
-      'disk',
-      'processes',
-      'ports',
-      'network',
-      'env',
-      'runtimes',
-      'tools',
-      'paths',
-      'versions',
-      'project',
-      'deps',
-      'git',
-      'config',
-      'caches',
-      'clean',
-    ];
-
-    for (const cmd of prematureCommands) {
-      expect(commandNames).not.toContain(cmd);
-    }
-  });
 });
