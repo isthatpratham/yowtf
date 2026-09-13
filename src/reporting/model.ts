@@ -2,6 +2,7 @@ import type { DiagnosticCategory } from '../domain/category.js';
 import type { DetectionResult } from '../domain/detection-result.js';
 import type { FindingStatus } from '../domain/status.js';
 import type { ScoreResult } from '../scoring/index.js';
+import { getAppVersion } from '../version.js';
 import type { DiagnosticCoverage, ReportMetadata, ReportModel } from './types.js';
 
 export interface CreateReportModelOptions {
@@ -61,7 +62,7 @@ export function createReportModel(
 
   const metadata: ReportMetadata = {
     tool: options.tool ?? 'yowtf',
-    version: options.version ?? '0.1.0',
+    version: options.version ?? getAppVersion(),
     command: options.command,
     targetPath: options.targetPath,
     scope: options.scope,

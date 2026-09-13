@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi, type MockInstance } from 'vitest';
 import { runCli } from '../../src/cli/cli.js';
+import { getAppVersion } from '../../src/version.js';
 
 describe('Full Pipeline Integration (docs/ARCHITECTURE.md Section 5.1 & docs/CLI-SPEC.md)', () => {
   let stdoutSpy: MockInstance<typeof process.stdout.write>;
@@ -40,7 +41,7 @@ describe('Full Pipeline Integration (docs/ARCHITECTURE.md Section 5.1 & docs/CLI
       expect(parsed).toHaveProperty('metadata');
       expect(parsed.metadata).toMatchObject({
         tool: 'yowtf',
-        version: '0.1.0',
+        version: getAppVersion(),
         command: 'yowtf',
         scope: 'system + project',
       });
