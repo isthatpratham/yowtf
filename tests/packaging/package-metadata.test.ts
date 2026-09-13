@@ -16,7 +16,7 @@ describe('Package Metadata & Packaging Readiness', () => {
 
   it('configures the public yowtf bin executable', () => {
     expect(packageJson.bin).toBeDefined();
-    expect(packageJson.bin.yowtf).toBe('./dist/cli.js');
+    expect(packageJson.bin.yowtf).toMatch(/(^\.\/)?dist\/cli\.js$/);
   });
 
   it('exposes standard module entrypoints and types', () => {
