@@ -1,4 +1,6 @@
 import { EXIT_SUCCESS } from '../cli/errors.js';
+import type { ReportModel } from '../reporting/types.js';
+import { ScanOrchestratorService } from './services/scan-orchestrator.service.js';
 
 /**
  * Application Layer foundational interfaces and use cases.
@@ -36,24 +38,38 @@ export interface CommandResult {
   readonly status: 'ready' | 'executed' | 'error';
   readonly message?: string;
   readonly exitCode: number;
+  readonly reportModel?: ReportModel;
 }
 
 /**
  * Application entry point for command execution.
- * In Phase 2, this establishes the delegation boundary from the CLI handlers
- * without fabricating diagnostic results, findings, or scores.
+ * Orchestrates the full diagnostic pipeline:
+ * Discovery -> Evidence Collection -> Detection -> Scoring -> Reporting.
  */
-export async function executeCommand(context: CommandContext): Promise<CommandResult> {
-  // Honest Phase 2 response: Command infrastructure is wired, diagnostic engine will run in later phases.
+export async function executeCommand(
+  context: CommandContext,
+  orchestrator: ScanOrchestratorService = new ScanOrchestratorService(),
+): Promise<CommandResult> {
+  const reportModel = await orchestrator.executeScan({
+    command: context.command,
+    targetPath: context.targetPath,
+    verbose: context.options.verbose,
+    json: context.options.json,
+    quiet: context.options.quiet,
+    color: context.options.color,
+    preview: context.options.preview,
+  });
+
   return {
     command: context.command,
     targetPath: context.targetPath,
-    status: 'ready',
-    message: `Command '${context.command}' dispatched for target: '${context.targetPath}'. Diagnostic engine will be executed in subsequent phases.`,
+    status: 'executed',
     exitCode: EXIT_SUCCESS,
+    reportModel,
   };
 }
 
 export * from './services/system-collection.service.js';
 export * from './services/project-collection.service.js';
 export * from './services/detection.service.js';
+export * from './services/scan-orchestrator.service.js';

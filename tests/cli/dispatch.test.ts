@@ -17,7 +17,7 @@ describe('Command Dispatch & Application Boundary', () => {
     expect(exitCode).toBe(0);
     expect(stdoutSpy).toHaveBeenCalled();
     const output = stdoutSpy.mock.calls.map((c) => c[0]).join('');
-    expect(output).toContain("Command 'yowtf' dispatched");
+    expect(output).toContain('YOWTF Diagnostic Report');
   });
 
   it('dispatches subcommands (e.g. doctor) with exit code 0', async () => {
@@ -25,17 +25,18 @@ describe('Command Dispatch & Application Boundary', () => {
     expect(exitCode).toBe(0);
     expect(stdoutSpy).toHaveBeenCalled();
     const output = stdoutSpy.mock.calls.map((c) => c[0]).join('');
-    expect(output).toContain("Command 'doctor' dispatched");
+    expect(output).toContain('YOWTF Diagnostic Report');
   });
 
-  it('dispatches clean command with --preview option', async () => {
+  it('dispatches clean command with --preview option in JSON mode', async () => {
     const exitCode = await runCli(['node', 'yowtf', 'clean', '--preview', '--json']);
     expect(exitCode).toBe(0);
     expect(stdoutSpy).toHaveBeenCalled();
     const lastCall = stdoutSpy.mock.calls[stdoutSpy.mock.calls.length - 1]?.[0] as string;
     const parsed = JSON.parse(lastCall);
-    expect(parsed).toHaveProperty('command', 'clean');
-    expect(parsed).toHaveProperty('status', 'ready');
+    expect(parsed.metadata).toHaveProperty('command', 'clean');
+    expect(parsed).toHaveProperty('status');
+    expect(parsed).toHaveProperty('coverage');
   });
 
   it('emits clean, machine-readable JSON in --json mode without ANSI escape codes', async () => {
@@ -50,16 +51,37 @@ describe('Command Dispatch & Application Boundary', () => {
     expect(rawOutput).not.toMatch(/\u001b\[/);
 
     const parsed = JSON.parse(rawOutput);
-    expect(parsed).toMatchObject({
+    expect(parsed.metadata).toMatchObject({
       command: 'system',
-      status: 'ready',
+      tool: 'yowtf',
     });
-    expect(typeof parsed.targetPath).toBe('string');
+    expect(parsed).toHaveProperty('status');
+    expect(parsed).toHaveProperty('coverage');
+    expect(Array.isArray(parsed.findings)).toBe(true);
+    expect(typeof parsed.metadata.targetPath).toBe('string');
   });
 
-  it('suppresses human-readable success messages in --quiet mode', async () => {
-    const exitCode = await runCli(['node', 'yowtf', 'ports', '--quiet']);
+  it('handles score command with score banner', async () => {
+    const exitCode = await runCli(['node', 'yowtf', 'score']);
     expect(exitCode).toBe(0);
-    expect(stdoutSpy).not.toHaveBeenCalled();
+    expect(stdoutSpy).toHaveBeenCalled();
+    const output = stdoutSpy.mock.calls.map((c) => c[0]).join('');
+    expect(output).toContain('Workstation Health Score');
+  });
+
+  it('handles explain command with explanation view', async () => {
+    const exitCode = await runCli(['node', 'yowtf', 'explain']);
+    expect(exitCode).toBe(0);
+    expect(stdoutSpy).toHaveBeenCalled();
+    const output = stdoutSpy.mock.calls.map((c) => c[0]).join('');
+    expect(output).toContain('YOWTF Diagnostic Explanations');
+  });
+
+  it('handles --quiet mode in score command with concise output', async () => {
+    const exitCode = await runCli(['node', 'yowtf', 'score', '--quiet']);
+    expect(exitCode).toBe(0);
+    expect(stdoutSpy).toHaveBeenCalled();
+    const output = stdoutSpy.mock.calls.map((c) => c[0]).join('');
+    expect(output).toMatch(/\d+\/100/);
   });
 });
