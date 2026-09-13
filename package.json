@@ -1,0 +1,55 @@
+{
+  "name": "yowtf",
+  "version": "0.1.0",
+  "description": "Your Operating Workstation Trouble Finder",
+  "keywords": [
+    "cli",
+    "developer-tools",
+    "diagnostics",
+    "troubleshooting",
+    "workstation-health",
+    "doctor"
+  ],
+  "author": "YOWTF Contributors",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "yowtf": "./dist/cli.js"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "dependencies": {
+    "boxen": "^8.0.1",
+    "chalk": "^5.4.1",
+    "cli-table3": "^0.6.5",
+    "commander": "^13.1.0",
+    "ora": "^8.2.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.21.0",
+    "@types/node": "^20.17.19",
+    "eslint": "^9.21.0",
+    "prettier": "^3.5.2",
+    "tsup": "^8.4.0",
+    "typescript": "^5.7.3",
+    "typescript-eslint": "^8.25.0",
+    "vitest": "^3.0.7"
+  }
+}
