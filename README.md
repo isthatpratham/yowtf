@@ -563,8 +563,6 @@ Or with pnpm:
 pnpm add -g yowtf
 ```
 
-> **Note:** Public npm publication will occur in Phase 11. Until published to the npm registry, you can clone and run YOWTF locally from source (see [Development](#-development)).
-
 Check the installed version:
 
 ```bash
@@ -1528,9 +1526,8 @@ See the [LICENSE](LICENSE) file for the full license text.
 
 # 🔗 Project
 
-GitHub:
-
-https://github.com/isthatpratham/yowtf
+- **GitHub**: [https://github.com/isthatpratham/yowtf](https://github.com/isthatpratham/yowtf)
+- **npm**: [https://www.npmjs.com/package/yowtf](https://www.npmjs.com/package/yowtf)
 
 ---
 

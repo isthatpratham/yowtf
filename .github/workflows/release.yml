@@ -1,0 +1,225 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  release:
+    name: Validate & Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js 24 (npm Trusted Publishing compatible)
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'pnpm'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Verify release runtime
+        run: |
+          node --version
+          npm --version
+
+          node -e "
+            const [major, minor, patch] = process.versions.node.split('.').map(Number);
+            if (major < 22 || (major === 22 && minor < 14)) {
+              console.error('Node.js 22.14.0+ is required for npm Trusted Publishing.');
+              process.exit(1);
+            }
+          "
+
+          node -e "
+            const { execSync } = require('child_process');
+            const npmVersion = execSync('npm --version', { encoding: 'utf8' }).trim();
+            const [major, minor, patch] = npmVersion.split('.').map(Number);
+            const isGte = major > 11 || (major === 11 && (minor > 5 || (minor === 5 && patch >= 1)));
+            if (!isGte) {
+              console.error('npm >= 11.5.1 is required for npm Trusted Publishing. Found: ' + npmVersion);
+              process.exit(1);
+            }
+            console.log('Runtime requirements satisfied: Node ' + process.version + ', npm ' + npmVersion);
+          "
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Verify code formatting
+        run: pnpm run format:check
+
+      - name: Lint codebase
+        run: pnpm run lint
+
+      - name: Verify TypeScript types
+        run: pnpm run typecheck
+
+      - name: Run test suite
+        run: pnpm test
+
+      - name: Build production bundle
+        run: pnpm run build
+
+      - name: Validate npm package contents
+        run: npm pack --dry-run
+
+      - name: Determine version and release state
+        id: release_check
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+
+          # 1. Validate semver format
+          if ! echo "$VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$'; then
+            echo "Error: package.json version '$VERSION' is not a valid Semantic Version." >&2
+            exit 1
+          fi
+
+          TAG="v$VERSION"
+          HEAD_COMMIT=$(git rev-parse HEAD)
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
+          # 2. Check npm package version existence
+          if npm view "yowtf@$VERSION" version >/dev/null 2>&1; then
+            npm_exists=true
+            echo "npm_exists=true" >> "$GITHUB_OUTPUT"
+            echo "yowtf@$VERSION is already published on npm."
+          else
+            npm_exists=false
+            echo "npm_exists=false" >> "$GITHUB_OUTPUT"
+            echo "yowtf@$VERSION is not published on npm."
+          fi
+
+          # 3. Check Git tag existence
+          if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null 2>&1; then
+            tag_exists=true
+            TAG_COMMIT=$(git rev-list -n 1 "refs/tags/$TAG")
+            echo "tag_exists=true" >> "$GITHUB_OUTPUT"
+            echo "tag_commit=$TAG_COMMIT" >> "$GITHUB_OUTPUT"
+            echo "Git tag $TAG exists (commit: $TAG_COMMIT)."
+          else
+            tag_exists=false
+            echo "tag_exists=false" >> "$GITHUB_OUTPUT"
+            echo "Git tag $TAG does not exist."
+          fi
+
+          # 4. Check GitHub Release existence independently
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            release_exists=true
+            echo "release_exists=true" >> "$GITHUB_OUTPUT"
+            echo "GitHub Release $TAG already exists."
+          else
+            release_exists=false
+            echo "release_exists=false" >> "$GITHUB_OUTPUT"
+            echo "GitHub Release $TAG does not exist."
+          fi
+
+          # 5. Evaluate release actions and conflicts
+          should_release=false
+          should_publish=false
+
+          if [ "$npm_exists" = "true" ]; then
+            if [ "$tag_exists" = "true" ]; then
+              if [ "$TAG_COMMIT" = "$HEAD_COMMIT" ]; then
+                # Tag points to current HEAD
+                if [ "$release_exists" = "false" ]; then
+                  echo "Current commit $HEAD_COMMIT has tag $TAG and is on npm, but GitHub Release is missing."
+                  echo "Will create missing GitHub Release using existing tag."
+                  should_release=true
+                else
+                  echo "Version $VERSION is already fully released on HEAD (tag, release, and npm exist). Nothing to do."
+                fi
+              else
+                # Tag exists pointing to an older/historical commit, while HEAD is a newer commit on main
+                echo "Package version $VERSION was already released on historical commit $TAG_COMMIT."
+                echo "Current HEAD ($HEAD_COMMIT) contains no new version bump; skipping release actions safely."
+              fi
+            else
+              # npm exists but tag does not exist
+              if [ "$release_exists" = "true" ]; then
+                echo "Release exists for $TAG and package is on npm. Nothing to do."
+              else
+                echo "Notice: yowtf@$VERSION is already published on npm, but tag $TAG and GitHub Release do not exist on this commit."
+                echo "Will not guess historical commit. Requires one-time manual GitHub Release creation."
+              fi
+            fi
+          else
+            # npm does NOT exist: this is a new or in-progress release
+            if [ "$tag_exists" = "true" ]; then
+              if [ "$TAG_COMMIT" != "$HEAD_COMMIT" ]; then
+                echo "Error: Tag '$TAG' already exists on commit $TAG_COMMIT, which does not match current release commit ($HEAD_COMMIT)." >&2
+                echo "Refusing to overwrite or release with conflicting tag." >&2
+                exit 1
+              fi
+              # Tag exists and matches HEAD
+              if [ "$release_exists" = "false" ]; then
+                should_release=true
+              fi
+              should_publish=true
+            else
+              # Neither tag nor npm exists
+              if [ "$release_exists" = "true" ]; then
+                echo "Error: GitHub Release '$TAG' exists, but neither tag '$TAG' nor npm version exists." >&2
+                echo "Inconsistent release state. Please check GitHub Releases." >&2
+                exit 1
+              fi
+              should_release=true
+              should_publish=true
+            fi
+          fi
+
+          echo "should_release=$should_release" >> "$GITHUB_OUTPUT"
+          echo "should_publish=$should_publish" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release
+        if: steps.release_check.outputs.should_release == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ steps.release_check.outputs.tag }}"
+          VERSION="${{ steps.release_check.outputs.version }}"
+          echo "Packaging tarball for release asset..."
+          TARBALL=$(npm pack)
+          echo "Creating GitHub Release for $TAG with $TARBALL..."
+          gh release create "$TAG" "$TARBALL" \
+            --title "YOWTF $TAG" \
+            --generate-notes
+
+      - name: Inform of manual release requirement for existing npm version
+        if: |
+          steps.release_check.outputs.release_exists != 'true' &&
+          steps.release_check.outputs.tag_exists != 'true' &&
+          steps.release_check.outputs.npm_exists == 'true'
+        run: |
+          VERSION="${{ steps.release_check.outputs.version }}"
+          TAG="${{ steps.release_check.outputs.tag }}"
+          echo "Notice: yowtf@$VERSION is already published to npm, but neither tag $TAG nor a GitHub Release exists on this commit."
+          echo "To establish release history for an already-published version, create the GitHub Release manually pointing to its release commit:"
+          echo "  gh release create $TAG --title \"YOWTF $TAG\" --generate-notes"
+
+      - name: Publish to npm (via Trusted Publishing / OIDC)
+        if: steps.release_check.outputs.should_publish == 'true'
+        run: |
+          VERSION="${{ steps.release_check.outputs.version }}"
+          echo "Publishing yowtf@$VERSION to npm via Trusted Publishing (OIDC)..."
+          npm publish --access public --provenance
