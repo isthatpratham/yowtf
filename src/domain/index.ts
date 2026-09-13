@@ -1,42 +1,33 @@
 /**
- * Core Domain types and foundational contracts for YOWTF.
- * Adheres to docs/ARCHITECTURE.md and docs/DETECTION-ENGINE.md.
+ * Core Domain Layer exports for YOWTF.
+ * Adheres to docs/ARCHITECTURE.md Section 5.3, docs/DETECTION-ENGINE.md, and docs/RULE-CATALOGUE.md.
  */
 
-export type DiagnosticSeverity = 'critical' | 'warning' | 'info';
+export * from './status.js';
+export * from './severity.js';
+export * from './confidence.js';
+export * from './category.js';
+export * from './rule-id.js';
+export * from './evidence.js';
+export * from './findings/index.js';
+export * from './rules/index.js';
 
-export type DiagnosticStatus = 'pass' | 'fail' | 'warn' | 'skip' | 'error';
+import type { Finding } from './findings/finding.js';
+import type { FindingSeverity } from './severity.js';
+import type { FindingStatus } from './status.js';
 
-export type DiagnosticCategory =
-  | 'system'
-  | 'disk'
-  | 'process'
-  | 'port'
-  | 'network'
-  | 'environment'
-  | 'runtime'
-  | 'tool'
-  | 'path'
-  | 'version'
-  | 'project'
-  | 'dependency'
-  | 'git'
-  | 'config'
-  | 'cache';
+// Backward-compatible type aliases
+export type DiagnosticStatus = FindingStatus;
+export type DiagnosticSeverity = FindingSeverity;
 
-export interface Finding {
-  readonly ruleId: string;
-  readonly category: DiagnosticCategory;
-  readonly status: DiagnosticStatus;
-  readonly severity: DiagnosticSeverity;
-  readonly message: string;
-  readonly explanation?: string;
-  readonly remediation?: string;
-  readonly evidence?: Record<string, unknown>;
-}
-
+/**
+ * Diagnostic scan result representing evaluated findings.
+ * Adheres to docs/DETECTION-ENGINE.md and docs/CLI-SPEC.md Section 46.
+ */
 export interface DiagnosticResult {
   readonly findings: readonly Finding[];
-  readonly timestamp: string;
-  readonly durationMs: number;
+  readonly status: FindingStatus;
+  readonly summary?: string;
+  readonly timestamp?: string;
+  readonly durationMs?: number;
 }
