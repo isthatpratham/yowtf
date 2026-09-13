@@ -1,16 +1,13 @@
 /**
- * Platform Layer foundational interfaces.
+ * Platform Layer foundational interfaces and implementations.
  * Provides isolated adapters for operating-system-specific mechanisms.
- * Reference: docs/ARCHITECTURE.md Section 5.5.
+ * Reference: docs/ARCHITECTURE.md Section 5.5 and docs/TECH-STACK.md Section 40.
  */
 
-export interface PlatformInfo {
-  readonly os: NodeJS.Platform;
-  readonly arch: string;
-  readonly release: string;
-  readonly hostname: string;
-}
-
-export interface PlatformAdapter {
-  getPlatformInfo(): PlatformInfo;
-}
+export * from './types.js';
+export * from './command.js';
+export * from './windows.js';
+export * from './macos.js';
+export * from './linux.js';
+export * from './unsupported.js';
+export * from './detector.js';
