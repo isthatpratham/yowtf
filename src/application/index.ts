@@ -53,3 +53,5 @@ export async function executeCommand(context: CommandContext): Promise<CommandRe
     exitCode: EXIT_SUCCESS,
   };
 }
+
+export * from './services/system-collection.service.js';
