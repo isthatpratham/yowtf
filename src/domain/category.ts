@@ -3,7 +3,7 @@
  * Adheres to docs/RULE-CATALOGUE.md Section 12 and docs/DETECTION-ENGINE.md Section 12.
  */
 
-export const CANONICAL_DIAGNOSTIC_CATEGORIES = [
+export const DIAGNOSTIC_CATEGORIES = [
   'system',
   'disk',
   'process',
@@ -21,64 +21,18 @@ export const CANONICAL_DIAGNOSTIC_CATEGORIES = [
   'cache',
 ] as const;
 
-export type CanonicalDiagnosticCategory = (typeof CANONICAL_DIAGNOSTIC_CATEGORIES)[number];
+export type DiagnosticCategory = (typeof DIAGNOSTIC_CATEGORIES)[number];
 
-export type DiagnosticCategory =
-  | CanonicalDiagnosticCategory
-  | 'processes'
-  | 'ports'
-  | 'env'
-  | 'runtimes'
-  | 'tools'
-  | 'paths'
-  | 'versions'
-  | 'dependencies'
-  | 'configuration'
-  | 'caches';
+// Canonical aliases for compatibility
+export const CANONICAL_DIAGNOSTIC_CATEGORIES = DIAGNOSTIC_CATEGORIES;
+export type CanonicalDiagnosticCategory = DiagnosticCategory;
 
-const CATEGORY_ALIAS_MAP: Readonly<Record<string, CanonicalDiagnosticCategory>> = {
-  system: 'system',
-  disk: 'disk',
-  process: 'process',
-  processes: 'process',
-  port: 'port',
-  ports: 'port',
-  network: 'network',
-  environment: 'environment',
-  env: 'environment',
-  runtime: 'runtime',
-  runtimes: 'runtime',
-  tool: 'tool',
-  tools: 'tool',
-  path: 'path',
-  paths: 'path',
-  version: 'version',
-  versions: 'version',
-  project: 'project',
-  dependency: 'dependency',
-  dependencies: 'dependency',
-  git: 'git',
-  config: 'config',
-  configuration: 'config',
-  cache: 'cache',
-  caches: 'cache',
-};
-
-/**
- * Normalizes a category string to its canonical singular form.
- * Returns null if the category is not recognized.
- */
-export function normalizeCategory(category: string): CanonicalDiagnosticCategory | null {
-  const lower = category.trim().toLowerCase();
-  return CATEGORY_ALIAS_MAP[lower] ?? null;
-}
+const CATEGORY_SET: ReadonlySet<string> = new Set(DIAGNOSTIC_CATEGORIES);
 
 /**
  * Type guard for DiagnosticCategory.
+ * Strictly verifies against the 15 authoritative diagnostic categories.
  */
 export function isDiagnosticCategory(value: unknown): value is DiagnosticCategory {
-  if (typeof value !== 'string') {
-    return false;
-  }
-  return value.toLowerCase() in CATEGORY_ALIAS_MAP;
+  return typeof value === 'string' && CATEGORY_SET.has(value);
 }

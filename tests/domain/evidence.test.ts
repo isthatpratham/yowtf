@@ -28,10 +28,11 @@ describe('Domain - Evidence Models', () => {
     expect(isEvidenceAvailability(null)).toBe(false);
   });
 
-  it('structures evidence items deterministically with normalized values and units', () => {
+  it('structures evidence items deterministically with normalized values, type, and units', () => {
     const item: EvidenceItem<number> = {
       key: 'system.memory.utilization',
       source: 'os.freemem',
+      type: 'percentage',
       availability: 'AVAILABLE',
       value: 92.5,
       unit: 'percent',
@@ -39,10 +40,21 @@ describe('Domain - Evidence Models', () => {
     };
 
     expect(item.key).toBe('system.memory.utilization');
+    expect(item.source).toBe('os.freemem');
+    expect(item.type).toBe('percentage');
     expect(item.availability).toBe('AVAILABLE');
     expect(item.value).toBe(92.5);
     expect(item.unit).toBe('percent');
     expect(item.metadata?.threshold).toBe(90);
+  });
+
+  it('distinguishes NOT_APPLICABLE from UNAVAILABLE and FAILED', () => {
+    const notApplicableItem: EvidenceItem = {
+      key: 'runtime.python.version',
+      source: 'python3',
+      availability: 'NOT_APPLICABLE',
+    };
+    expect(notApplicableItem.availability).toBe('NOT_APPLICABLE');
   });
 
   it('attaches structured evidence items to FindingEvidence container', () => {

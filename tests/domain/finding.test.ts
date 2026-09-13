@@ -59,6 +59,12 @@ describe('Domain - Finding Model', () => {
     expect(finding.impact).toContain('Different developers');
     expect(finding.remediationHint).toContain('Create a .nvmrc');
     expect(finding.evidence?.items).toHaveLength(1);
+
+    // Verify deep immutability on nested evidence
+    expect(Object.isFrozen(finding)).toBe(true);
+    expect(Object.isFrozen(finding.evidence)).toBe(true);
+    expect(Object.isFrozen(finding.evidence?.items)).toBe(true);
+    expect(Object.isFrozen(finding.evidence?.items[0])).toBe(true);
   });
 
   it('can represent UNAVAILABLE status without being a failure', () => {

@@ -15,6 +15,8 @@ export interface RuleMetadata {
   readonly description: string;
   readonly severity: FindingSeverity;
   readonly confidence: FindingConfidence;
+  readonly applicability?: readonly string[];
+  readonly requiredEvidence?: readonly string[];
   readonly explanation?: string;
   readonly remediationHint?: string;
 }
