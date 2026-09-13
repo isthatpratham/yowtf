@@ -1,4 +1,5 @@
 import { EXIT_SUCCESS } from '../cli/errors.js';
+import type { PlatformAdapter } from '../platform/types.js';
 import type { ReportModel } from '../reporting/types.js';
 import { ScanOrchestratorService } from './services/scan-orchestrator.service.js';
 
@@ -29,6 +30,7 @@ export interface CommandContext {
     readonly quiet?: boolean;
     readonly color?: boolean;
     readonly preview?: boolean;
+    readonly platformAdapter?: PlatformAdapter;
   };
 }
 
@@ -58,6 +60,7 @@ export async function executeCommand(
     quiet: context.options.quiet,
     color: context.options.color,
     preview: context.options.preview,
+    platformAdapter: context.options.platformAdapter,
   });
 
   return {
