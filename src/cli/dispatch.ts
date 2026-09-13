@@ -1,5 +1,6 @@
 import { executeCommand, type CommandContext } from '../application/index.js';
 import { JsonReporter, TerminalReporter } from '../reporting/index.js';
+import { playBootAnimation } from './animation.js';
 import type { GlobalOptions } from './options.js';
 import { resolveAndValidatePath } from './path.js';
 
@@ -18,6 +19,13 @@ export async function dispatchCommand(
   commandSpecificOptions: Record<string, unknown> = {},
 ): Promise<number> {
   const targetPath = resolveAndValidatePath(options.path);
+
+  // Trigger presentation-layer boot animation if eligible (TTY, non-json, non-quiet)
+  await playBootAnimation({
+    json: Boolean(options.json),
+    quiet: Boolean(options.quiet),
+    color: options.color !== false,
+  });
 
   const context: CommandContext = {
     command: commandName,

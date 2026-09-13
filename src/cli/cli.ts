@@ -12,7 +12,7 @@ import { registerGlobalOptions } from './options.js';
 export const APP_NAME = 'yowtf';
 export const APP_FULL_NAME = 'Your Operating Workstation Trouble Finder';
 export const APP_TAGLINE = 'Yo, WTF is happening?';
-export const APP_VERSION = '0.1.0';
+export const APP_VERSION = '0.1.1';
 
 /**
  * Creates and configures the complete Commander program for YOWTF.
