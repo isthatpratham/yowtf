@@ -14,7 +14,7 @@
   "license": "MIT",
   "type": "module",
   "bin": {
-    "yowtf": "./dist/cli.js"
+    "yowtf": "dist/cli.js"
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
