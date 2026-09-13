@@ -64,7 +64,7 @@ export class ScanOrchestratorService {
     const needsProject = scope.includes('project');
 
     if (needsSystem && needsProject) {
-      const [sysEvidence, projResult] = await Promise.all([
+      const [sysResult, projResult] = await Promise.allSettled([
         this.systemCollectionService.collectSystemEvidence({
           cwd: targetPath,
           platformAdapter,
@@ -75,22 +75,81 @@ export class ScanOrchestratorService {
           platformAdapter,
         }),
       ]);
-      evidenceSets.push(sysEvidence, projResult.evidence);
-      projectRoot = projResult.project.rootPath;
+
+      if (sysResult.status === 'fulfilled') {
+        evidenceSets.push(sysResult.value);
+      } else {
+        evidenceSets.push({
+          category: 'system',
+          items: [
+            {
+              key: 'system.platform.supported',
+              source: 'platform',
+              type: 'platform',
+              availability: 'FAILED',
+            },
+          ],
+        });
+      }
+
+      if (projResult.status === 'fulfilled') {
+        evidenceSets.push(projResult.value.evidence);
+        projectRoot = projResult.value.project.rootPath;
+      } else {
+        evidenceSets.push({
+          category: 'project',
+          items: [
+            {
+              key: 'project.root',
+              source: 'discovery',
+              type: 'path',
+              availability: 'FAILED',
+            },
+          ],
+        });
+      }
     } else if (needsSystem) {
-      const sysEvidence = await this.systemCollectionService.collectSystemEvidence({
-        cwd: targetPath,
-        platformAdapter,
-      });
-      evidenceSets.push(sysEvidence);
+      try {
+        const sysEvidence = await this.systemCollectionService.collectSystemEvidence({
+          cwd: targetPath,
+          platformAdapter,
+        });
+        evidenceSets.push(sysEvidence);
+      } catch {
+        evidenceSets.push({
+          category: 'system',
+          items: [
+            {
+              key: 'system.platform.supported',
+              source: 'platform',
+              type: 'platform',
+              availability: 'FAILED',
+            },
+          ],
+        });
+      }
     } else if (needsProject) {
-      const projResult = await this.projectCollectionService.discoverAndCollect({
-        targetPath,
-        cwd: targetPath,
-        platformAdapter,
-      });
-      evidenceSets.push(projResult.evidence);
-      projectRoot = projResult.project.rootPath;
+      try {
+        const projResult = await this.projectCollectionService.discoverAndCollect({
+          targetPath,
+          cwd: targetPath,
+          platformAdapter,
+        });
+        evidenceSets.push(projResult.evidence);
+        projectRoot = projResult.project.rootPath;
+      } catch {
+        evidenceSets.push({
+          category: 'project',
+          items: [
+            {
+              key: 'project.root',
+              source: 'discovery',
+              type: 'path',
+              availability: 'FAILED',
+            },
+          ],
+        });
+      }
     }
 
     // 3. Prepare detection context

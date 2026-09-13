@@ -38,7 +38,10 @@ export async function executeSafeCommand(
   args: readonly string[] = [],
   options: SafeCommandOptions = {},
 ): Promise<SafeCommandResult> {
-  const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+  const timeoutMs =
+    options.timeoutMs !== undefined && options.timeoutMs > 0
+      ? options.timeoutMs
+      : DEFAULT_TIMEOUT_MS;
   const start = Date.now();
 
   return new Promise((resolve, reject) => {

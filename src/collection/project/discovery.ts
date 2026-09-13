@@ -250,6 +250,12 @@ export class ProjectDiscovery {
     filePath: string,
   ): Promise<ProjectManifestMetadata | undefined> {
     try {
+      const stats = await fs.stat(filePath);
+      // Guard against oversized pathological files (max 5MB)
+      if (stats.size > 5 * 1024 * 1024) {
+        return undefined;
+      }
+
       const content = await fs.readFile(filePath, 'utf8');
       const parsed = JSON.parse(content) as Record<string, unknown>;
 
@@ -356,11 +362,22 @@ export class ProjectDiscovery {
       return { isRepository: false };
     }
 
-    const gitPath = path.join(rootPath, '.git');
+    const gitEntryPath = path.join(rootPath, '.git');
+    let effectiveGitDir = gitEntryPath;
     let branch: string | undefined;
 
     try {
-      const headContent = await fs.readFile(path.join(gitPath, 'HEAD'), 'utf8');
+      const stat = await fs.stat(gitEntryPath);
+      if (stat.isFile()) {
+        // Git worktree support: .git is a text file containing "gitdir: <path>"
+        const gitFileContent = await fs.readFile(gitEntryPath, 'utf8');
+        const match = gitFileContent.match(/^gitdir:\s*(.+)$/m);
+        if (match && match[1]) {
+          effectiveGitDir = path.resolve(rootPath, match[1].trim());
+        }
+      }
+
+      const headContent = await fs.readFile(path.join(effectiveGitDir, 'HEAD'), 'utf8');
       const trimmed = headContent.trim();
       if (trimmed.startsWith('ref: refs/heads/')) {
         branch = trimmed.replace('ref: refs/heads/', '');
@@ -373,7 +390,7 @@ export class ProjectDiscovery {
 
     return {
       isRepository: true,
-      gitDir: gitPath,
+      gitDir: effectiveGitDir,
       branch,
     };
   }
