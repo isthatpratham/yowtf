@@ -6,6 +6,6 @@ describe('Project Foundation', () => {
     expect(APP_NAME).toBe('yowtf');
     expect(APP_FULL_NAME).toBe('Your Operating Workstation Trouble Finder');
     expect(APP_TAGLINE).toBe('Yo, WTF is happening?');
-    expect(APP_VERSION).toBe('0.1.0');
+    expect(APP_VERSION).toBe('0.1.1');
   });
 });
