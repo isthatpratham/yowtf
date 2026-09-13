@@ -1,4 +1,5 @@
 import { executeCommand, type CommandContext } from '../application/index.js';
+import { JsonReporter, TerminalReporter } from '../reporting/index.js';
 import type { GlobalOptions } from './options.js';
 import { resolveAndValidatePath } from './path.js';
 
@@ -32,23 +33,30 @@ export async function dispatchCommand(
 
   const result = await executeCommand(context);
 
-  if (options.json) {
-    const jsonOutput = JSON.stringify(
-      {
-        command: result.command,
-        targetPath: result.targetPath,
-        status: result.status,
-        message: result.message,
-      },
-      null,
-      2,
-    );
-    process.stdout.write(`${jsonOutput}\n`);
-    return result.exitCode;
-  }
+  if (result.reportModel) {
+    if (options.json) {
+      const reporter = new JsonReporter();
+      const output = reporter.render(result.reportModel, {
+        json: true,
+        quiet: Boolean(options.quiet),
+        verbose: Boolean(options.verbose),
+        command: commandName,
+      });
+      process.stdout.write(`${output}\n`);
+      return result.exitCode;
+    }
 
-  if (!options.quiet && result.message) {
-    process.stdout.write(`${result.message}\n`);
+    const reporter = new TerminalReporter();
+    const output = reporter.render(result.reportModel, {
+      color: options.color !== false,
+      quiet: Boolean(options.quiet),
+      verbose: Boolean(options.verbose),
+      command: commandName,
+    });
+    if (output) {
+      process.stdout.write(`${output}\n`);
+    }
+    return result.exitCode;
   }
 
   return result.exitCode;

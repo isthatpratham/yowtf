@@ -63,8 +63,9 @@ describe('CLI Global Options', () => {
     expect(stdoutSpy).toHaveBeenCalled();
     const lastCall = stdoutSpy.mock.calls[stdoutSpy.mock.calls.length - 1]?.[0] as string;
     const parsed = JSON.parse(lastCall);
-    expect(parsed).toHaveProperty('command', 'yowtf');
-    expect(parsed).toHaveProperty('status', 'ready');
+    expect(parsed.metadata).toHaveProperty('command', 'yowtf');
+    expect(parsed).toHaveProperty('status');
+    expect(parsed).toHaveProperty('coverage');
   });
 
   it('handles combined options (--verbose --no-color)', async () => {
